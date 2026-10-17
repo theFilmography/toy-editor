@@ -137,6 +137,7 @@ const VideoPreviewArea: React.FC<VideoPreviewAreaProps> = ({ virtualTimeline, on
         const video = videoRef.current;
         const clipId = currentInstruction.clip.id;
         const seekTime = currentInstruction.seekTime + (currentInstruction.clip.trimStart || 0);
+        const canSeek = Number.isFinite(seekTime);
 
         // Handle clip changes
         if (lastClipIdRef.current !== clipId) {
@@ -147,7 +148,9 @@ const VideoPreviewArea: React.FC<VideoPreviewAreaProps> = ({ virtualTimeline, on
 
             const handleCanPlay = () => {
                 // Video is ready to play at the seeked position
-                video.currentTime = seekTime;
+                if (canSeek) {
+                    video.currentTime = seekTime;
+                }
                 setIsVideoLoading(false);
 
                 // If we should be playing, ensure video starts
@@ -175,7 +178,7 @@ const VideoPreviewArea: React.FC<VideoPreviewAreaProps> = ({ virtualTimeline, on
             };
         } else {
             // Same clip, just seek to new position
-            if (video.readyState >= 2 && Math.abs(video.currentTime - seekTime) > 0.05) {
+            if (canSeek && video.readyState >= 2 && Math.abs(video.currentTime - seekTime) > 0.05) {
                 video.currentTime = seekTime;
             }
         }

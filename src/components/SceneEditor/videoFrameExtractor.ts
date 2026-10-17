@@ -78,6 +78,10 @@ const extractVideoFrameWithCORS = async (
         video.onloadedmetadata = () => {
             // Clamp time to video duration
             const seekTime = Math.min(timeInSeconds, video.duration);
+            if (!Number.isFinite(seekTime)) {
+                reject(new Error(`Cannot seek to non-finite time: ${seekTime}`));
+                return;
+            }
             video.currentTime = seekTime;
         };
 
