@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { Node, Canvas, SceneEditorCell, MediaNode, NodeType, MediaNodeStatus } from '../types/timeline';
+import { readFiniteDuration } from '../services/videoFrameExtractor';
 
 // Simplified state manager interface for timeline operations
 class SimpleStateManager {
@@ -139,10 +140,10 @@ export const TimelineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         video.onloadedmetadata = () => {
           width = video.videoWidth;
           height = video.videoHeight;
-          duration = video.duration;
           resolve(null);
         };
       });
+      duration = await readFiniteDuration(video);
     } else {
       // Get image dimensions
       const img = new Image();
@@ -199,7 +200,7 @@ export const TimelineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       const cellId = `cell-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const duration = node.type === NodeType.VIDEO ? node.data.duration : 3;
+      const duration = (node.type === NodeType.VIDEO && node.data.duration) || 3;
 
       const newCell: SceneEditorCell = {
         id: cellId,

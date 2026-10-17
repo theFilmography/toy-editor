@@ -379,7 +379,7 @@ export class VirtualTimelineManagerImpl implements VirtualTimelineManager {
      * This is the visible duration that should be used for timeline calculations
      */
     private getEffectiveDuration(cell: SceneEditorCell): number {
-        const originalDuration = cell.duration || 0;
+        const originalDuration = Number.isFinite(cell.duration) ? cell.duration! : 0;
         const trimStart = cell.trimStart || 0;
         const trimEnd = cell.trimEnd || 0;
         return Math.max(0.1, originalDuration - trimStart - trimEnd);

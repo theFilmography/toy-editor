@@ -77,7 +77,11 @@ const extractVideoFrameWithCORS = async (
 
         video.onloadedmetadata = () => {
             // Clamp time to video duration
-            const seekTime = Math.min(timeInSeconds, video.duration);
+            const seekTime = Number.isFinite(video.duration) ? Math.min(timeInSeconds, video.duration) : timeInSeconds;
+            if (!Number.isFinite(seekTime)) {
+                reject(new Error(`Cannot seek to non-finite time: ${seekTime}`));
+                return;
+            }
             video.currentTime = seekTime;
         };
 
@@ -165,6 +169,30 @@ export const generateKeyframeTimestamps = (
     }
 
     return timestamps;
+};
+
+/**
+ * Read a finite duration from a video whose metadata has loaded.
+ * Some WebM recordings report Infinity until the browser scans to the end,
+ * so seek far ahead and read the duration again on durationchange.
+ */
+export const readFiniteDuration = (video: HTMLVideoElement, timeoutMs: number = 3000): Promise<number | undefined> => {
+    if (Number.isFinite(video.duration)) return Promise.resolve(video.duration);
+
+    return new Promise((resolve) => {
+        const finish = (duration?: number) => {
+            clearTimeout(timer);
+            video.removeEventListener('durationchange', handleDurationChange);
+            resolve(duration);
+        };
+        const handleDurationChange = () => {
+            if (Number.isFinite(video.duration)) finish(video.duration);
+        };
+        const timer = setTimeout(() => finish(undefined), timeoutMs);
+
+        video.addEventListener('durationchange', handleDurationChange);
+        video.currentTime = Number.MAX_SAFE_INTEGER;
+    });
 };
 
 /**
